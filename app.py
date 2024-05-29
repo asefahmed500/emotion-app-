@@ -95,7 +95,8 @@ def main():
                 st.success("Prediction")
                 predicted_emotion = emotions_emoji_dict.get(prediction, "Unknown")
                 emoji_icon = emotions_emoji_dict.get(prediction, "❓")
-                st.write(f"Emotion: {predicted_emotion} {emoji_icon}")
+                # Display the emoji and text together
+                st.write(f"Emotion: {predicted_emotion} {emoji_icon} - {prediction}")
                 st.write(f"Confidence: {np.max(probability):.2f}")
 
             with col2:
