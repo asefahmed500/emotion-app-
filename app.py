@@ -7,17 +7,19 @@ from datetime import datetime
 import joblib
 import pytz
 from track_utils import create_page_visited_table, add_page_visited_details, view_all_page_visited_details, add_prediction_details, view_all_prediction_details, create_emotionclf_table, IST
+
 # Load Model
 pipe_lr = joblib.load(open("model.pkl", "rb"))
 
 # Define the array of emotion labels
 emotion_labels = ['anger', 'disgust', 'fear', 'guilt', 'joy', 'love', 'sadness', 'shame', 'surprise']
 
-# Function
+# Function to predict emotion
 def predict_emotions(docx):
     results = pipe_lr.predict([docx])
     return results[0]
 
+# Function to get prediction probabilities
 def get_prediction_proba(docx):
     results = pipe_lr.predict_proba([docx])
     return results
@@ -62,7 +64,7 @@ def main():
     </style>
     """, unsafe_allow_html=True)
     
-    st.title("Emotion Detector ")
+    st.title("Emotion Detector")
     
     with st.sidebar:
         st.header("Menu")
@@ -95,20 +97,23 @@ def main():
                 st.success("Prediction")
                 predicted_emotion = emotions_emoji_dict.get(prediction, "Unknown")
                 emoji_icon = emotions_emoji_dict.get(prediction, "❓")
-                # Display the emoji and text together
-                st.write(f"Emotion: {predicted_emotion} {emoji_icon} - {prediction}")
+                # Display the type of text based on the model prediction
+                st.write(f"The text you entered is detected as expressing: {predicted_emotion} {emoji_icon} - {prediction}")
                 st.write(f"Confidence: {np.max(probability):.2f}")
 
             with col2:
                 st.success("Prediction Probability")
                 proba_df = pd.DataFrame(probability, columns=pipe_lr.classes_)
                 proba_df_clean = proba_df.T.reset_index()
-                proba_df_clean.columns = ["emotions", "probability"]
+                proba_df_clean.columns = ["emotion", "probability"]
+
+                # Map emotion indices to emotion labels
+                proba_df_clean['emotion'] = proba_df_clean['emotion'].map(lambda idx: emotion_labels[idx])
 
                 fig = alt.Chart(proba_df_clean).mark_bar().encode(
-                    x=alt.X('emotions', sort=None),
-                    y='probability',
-                    color='emotions'
+                    x=alt.X('emotion', sort=None, title='Emotion Type'),
+                    y=alt.Y('probability', title='Probability'),
+                    color='emotion'
                 ).properties(width=350, height=300)
                 st.altair_chart(fig, use_container_width=True)
 
